@@ -1,4 +1,6 @@
 # models.py
+import re
+
 
 class User:
     def __init__(self, id, first_name, last_name, email, total_reactions=0, posts=None):
@@ -9,4 +11,9 @@ class User:
         self.total_reactions = total_reactions
         self.posts = posts
 
+    @staticmethod
+    def is_valid_email(email):
+        if re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return True
+        return False
 
