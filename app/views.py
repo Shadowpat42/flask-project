@@ -60,3 +60,35 @@ def get_user(user_id):
             mimetype="application/json",
         )
         return response
+
+
+@app.post("/post/create")
+def post_create():
+    data = request.get_json()
+    author_id = data["author_id"]
+    if author_id < 0 or author_id >= len(USERS):
+        return Response(status=HTTPStatus.NOT_FOUND)
+    post_id = len(USERS[int(author_id)].posts)
+    text = data["text"]
+    post = models.Post(author_id, text)
+    post_to_dict = {
+        "post_id": post_id,
+        "author_id": post.author_id,
+        "text": post.text,
+        "reactions": post.reactions,
+    }
+    USERS[int(author_id)].posts.append(post_to_dict)
+    response = Response(
+        json.dumps(
+            {
+                "post_id": post_id,
+                "author_id": post.author_id,
+                "text": post.text,
+                "reactions": post.reactions,
+            }
+        ),
+        mimetype="application/json",
+        status=HTTPStatus.CREATED,
+    )
+
+    return response
