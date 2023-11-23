@@ -99,19 +99,17 @@ def post_create():
 
 @app.get("/post/<int:user_id>/<int:post_id>")
 def get_post(user_id, post_id):
-    if (user_id < 0 or user_id >= len(USERS)) or (
-        post_id < 0 or post_id > len(USERS[user_id].posts)
-    ):
+    if models.Post.is_valid_id(user_id, post_id) is False:
         return Response(status=HTTPStatus.NOT_FOUND)
 
     post = USERS[user_id].posts[post_id]
     response = Response(
         json.dumps(
             {
-                "post_id": post.post_id,
-                "author_id": post.author_id,
-                "text": post.text,
-                "reactions": post.reactions,
+                "post_id": post_id,
+                "author_id": post["author_id"],
+                "text": post["text"],
+                "reactions": post["reactions"],
             }
         ),
         status=HTTPStatus.CREATED,
@@ -125,11 +123,11 @@ def get_post(user_id, post_id):
 def reaction(author_id, post_id):
     data = request.get_json()
     user_id = int(data["user_id"])
-    if user_id < 0 or user_id >= len(USERS):
+    if models.User.is_valid_id(user_id) is False:
         return Response(status=HTTPStatus.NOT_FOUND)
 
     user_reaction = data["reaction"]
-    if user_reaction not in ["like", "dislike"]:
+    if models.Reaction.is_valid_reaction(user_reaction) is False:
         return Response(status=HTTPStatus.BAD_REQUEST)
 
     reaction_obj = models.Reaction(post_id, user_id, user_reaction)
@@ -161,7 +159,7 @@ def get_posts(user_id):
 @app.get("/users/leaderboard")
 def get_users():
     data = request.get_json()
-    leaderboard_type = data["type"]
+    # leaderboard_type = data["type"]
     sort = data["sort"]
     if sort == "asc":
         sorted_users = sorted(USERS, key=lambda x: x.total_reactions)

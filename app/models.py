@@ -1,11 +1,12 @@
 # models.py
-from app import USERS
 import re
+
+from app import USERS
 
 
 class User:
-    def __init__(self, id, first_name, last_name, email):
-        self.id = id
+    def __init__(self, user_id, first_name, last_name, email):
+        self.id = user_id
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
@@ -48,6 +49,14 @@ class Post:
             "reactions": self.reactions,
         }
 
+    @staticmethod
+    def is_valid_id(user_id, post_id):
+        if (user_id < 0 or user_id >= len(USERS)) or (
+            post_id < 0 or post_id >= len(USERS[user_id].posts)
+        ):
+            return False
+        return True
+
 
 class Reaction:
     def __init__(self, post_id, user_id, user_reaction):
@@ -61,3 +70,9 @@ class Reaction:
             "user_id": self.user_id,
             "user_reaction": self.user_reaction,
         }
+
+    @staticmethod
+    def is_valid_reaction(reaction):
+        if reaction not in ["like", "dislike"]:
+            return False
+        return True
