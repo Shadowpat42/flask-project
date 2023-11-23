@@ -13,7 +13,7 @@ def index():
 @app.post("/user/create")
 def user_create():
     data = request.get_json()
-    id = len(USERS)
+    user_id = len(USERS)
     first_name = data["first_name"]
     last_name = data["last_name"]
     email = data["email"]
@@ -21,7 +21,7 @@ def user_create():
     if not models.User.is_valid_email(email):
         return Response(status=HTTPStatus.BAD_REQUEST)
 
-    user = models.User(id, first_name, last_name, email)
+    user = models.User(user_id, first_name, last_name, email)
 
     USERS.append(user)
     response = Response(
@@ -78,14 +78,8 @@ def post_create():
     post_id = len(user.posts)
 
     post = models.Post(author_id, text)
-    post_to_dict = {
-        "post_id": post_id,
-        "author_id": post.author_id,
-        "text": post.text,
-        "reactions": [],
-    }
 
-    user.posts.append(post_to_dict)
+    user.posts.append(post.to_dict())
 
     response = Response(
         json.dumps(
@@ -109,6 +103,7 @@ def get_post(user_id, post_id):
         post_id < 0 or post_id > len(USERS[user_id].posts)
     ):
         return Response(status=HTTPStatus.NOT_FOUND)
+
     post = USERS[user_id].posts[post_id]
     response = Response(
         json.dumps(
@@ -132,16 +127,14 @@ def reaction(author_id, post_id):
     user_id = int(data["user_id"])
     if user_id < 0 or user_id >= len(USERS):
         return Response(status=HTTPStatus.NOT_FOUND)
-    reaction = data["reaction"]
-    if reaction not in ["like", "dislike"]:
+
+    user_reaction = data["reaction"]
+    if user_reaction not in ["like", "dislike"]:
         return Response(status=HTTPStatus.BAD_REQUEST)
-    post = USERS[int(author_id)].posts[post_id]
-    reactions_to_dict = {
-        "user_id": user_id,
-        "reaction": reaction,
-    }
-    post["reactions"].append(reactions_to_dict)
-    USERS[user_id].total_reactions += 1
+
+    reaction_obj = models.Reaction(post_id, user_id, user_reaction)
+    USERS[int(author_id)].add_reaction(reaction_obj)
+
     return Response(status=HTTPStatus.CREATED)
 
 
@@ -168,6 +161,7 @@ def get_posts(user_id):
 @app.get("/users/leaderboard")
 def get_users():
     data = request.get_json()
+    leaderboard_type = data["type"]
     sort = data["sort"]
     if sort == "asc":
         sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
