@@ -1,4 +1,5 @@
 # models.py
+from app import USERS
 import re
 
 
@@ -17,6 +18,12 @@ class User:
             return True
         return False
 
+    @staticmethod
+    def is_valid_id(user_id):
+        if user_id < 0 or user_id >= len(USERS):
+            return False
+        return True
+
     def add_post(self, post):
         self.posts.append(post.to_dict())
 
@@ -27,13 +34,15 @@ class User:
 
 
 class Post:
-    def __init__(self, author_id=0, text=""):
+    def __init__(self, post_id, author_id=0, text=""):
+        self.post_id = post_id
         self.author_id = author_id
         self.text = text
         self.reactions = []
 
     def to_dict(self):
         return {
+            "post_id": self.post_id,
             "author_id": self.author_id,
             "text": self.text,
             "reactions": self.reactions,

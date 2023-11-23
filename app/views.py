@@ -43,7 +43,7 @@ def user_create():
 
 @app.get("/user/<int:user_id>")
 def get_user(user_id):
-    if user_id < 0 or user_id >= len(USERS):
+    if models.User.is_valid_id(user_id) is False:
         return Response(status=HTTPStatus.NOT_FOUND)
     else:
         user = USERS[user_id]
@@ -69,7 +69,7 @@ def post_create():
     data = request.get_json()
     author_id = data["author_id"]
 
-    if author_id < 0 or author_id >= len(USERS):
+    if models.User.is_valid_id(author_id) is False:
         return Response(status=HTTPStatus.NOT_FOUND)
 
     user = USERS[int(author_id)]
@@ -77,9 +77,9 @@ def post_create():
 
     post_id = len(user.posts)
 
-    post = models.Post(author_id, text)
+    post = models.Post(post_id, author_id, text)
 
-    user.posts.append(post.to_dict())
+    user.add_post(post)
 
     response = Response(
         json.dumps(
@@ -108,10 +108,10 @@ def get_post(user_id, post_id):
     response = Response(
         json.dumps(
             {
-                "post_id": post["post_id"],
-                "author_id": post["author_id"],
-                "text": post["text"],
-                "reactions": post["reactions"],
+                "post_id": post.post_id,
+                "author_id": post.author_id,
+                "text": post.text,
+                "reactions": post.reactions,
             }
         ),
         status=HTTPStatus.CREATED,
