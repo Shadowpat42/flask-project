@@ -5,12 +5,12 @@ from app import USERS
 
 
 class User:
-    def __init__(self, user_id, first_name, last_name, email):
+    def __init__(self, user_id, first_name, last_name, email, total_reaction=0):
         self.id = user_id
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
-        self.total_reactions = 0
+        self.total_reactions = total_reaction
         self.posts = []
 
     @staticmethod
@@ -29,7 +29,8 @@ class User:
         self.posts.append(post.to_dict())
 
     def add_reaction(self, reaction):
-        self.total_reactions += 1
+        user = USERS[reaction.user_id]
+        user.total_reactions += 1
         post_id = reaction.post_id
         self.posts[int(post_id)]["reactions"].append(reaction.to_dict())
 
@@ -73,6 +74,4 @@ class Reaction:
 
     @staticmethod
     def is_valid_reaction(reaction):
-        if reaction not in ["like", "dislike"]:
-            return False
-        return True
+        return reaction in ["like", "dislike"]

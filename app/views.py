@@ -1,6 +1,7 @@
 from app import app, USERS, models
-from flask import request, Response
+from flask import request, Response, url_for
 from http import HTTPStatus
+import matplotlib.pyplot as plt
 import json
 import copy
 
@@ -74,11 +75,8 @@ def post_create():
 
     user = USERS[int(author_id)]
     text = data["text"]
-
     post_id = len(user.posts)
-
     post = models.Post(post_id, author_id, text)
-
     user.add_post(post)
 
     response = Response(
@@ -159,7 +157,7 @@ def get_posts(user_id):
 @app.get("/users/leaderboard")
 def get_users():
     data = request.get_json()
-    # leaderboard_type = data["type"]
+    leaderboard_type = data["type"]
     sort = data["sort"]
     if sort == "asc":
         sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
@@ -168,19 +166,39 @@ def get_users():
     else:
         return Response(status=HTTPStatus.BAD_REQUEST)
 
-    users_copy = copy.deepcopy(sorted_users)
-    for user in users_copy:
+    leaderboard = copy.deepcopy(sorted_users)
+    for user in leaderboard:
         user.__dict__.pop("posts", None)
 
-    response = Response(
-        json.dumps(
-            {
-                "users": users_copy,
-            },
-            default=lambda x: x.__dict__,
-            indent=None,
-        ),
-        status=HTTPStatus.CREATED,
-        mimetype="application/json",
-    )
-    return response
+    if leaderboard_type == "list":
+        response = Response(
+            json.dumps(
+                {
+                    "users": leaderboard,
+                },
+                default=lambda x: x.__dict__,
+                indent=None,
+            ),
+            status=HTTPStatus.CREATED,
+            mimetype="application/json",
+        )
+        return response
+
+    elif leaderboard_type == "graph":
+        fig, ax = plt.subplots()
+
+        user_names = [f"{user.first_name} {user.last_name} ({user.id})" for user in leaderboard]
+        user_total_reactions = [user.total_reactions for user in leaderboard]
+
+        ax.bar(user_names, user_total_reactions)
+        ax.set_ylabel("User total reactions")
+        ax.set_title("User leaderboard by total reactions")
+
+        plt.savefig("app/static/users_leaderboard.png")
+        return Response(
+            f"""<img src= "{url_for('static', filename='users_leaderboard.png')}">""",
+            status=HTTPStatus.CREATED,
+            mimetype="text/html",
+        )
+    else:
+        return Response(status=HTTPStatus.BAD_REQUEST)
