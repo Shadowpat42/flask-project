@@ -158,19 +158,19 @@ def get_posts(user_id):
 def get_users():
     data = request.get_json()
     leaderboard_type = data["type"]
-    sort = data["sort"]
-    if sort == "asc":
-        sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
-    elif sort == "desc":
-        sorted_users = sorted(USERS, key=lambda x: x.total_reactions, reverse=True)
-    else:
-        return Response(status=HTTPStatus.BAD_REQUEST)
-
-    leaderboard = copy.deepcopy(sorted_users)
-    for user in leaderboard:
-        user.__dict__.pop("posts", None)
-
     if leaderboard_type == "list":
+        sort = data["sort"]
+        if sort == "asc":
+            sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
+        elif sort == "desc":
+            sorted_users = sorted(USERS, key=lambda x: x.total_reactions, reverse=True)
+        else:
+            return Response(status=HTTPStatus.BAD_REQUEST)
+
+        leaderboard = copy.deepcopy(sorted_users)
+        for user in leaderboard:
+            user.__dict__.pop("posts", None)
+
         response = Response(
             json.dumps(
                 {
@@ -185,6 +185,8 @@ def get_users():
         return response
 
     elif leaderboard_type == "graph":
+        sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
+        leaderboard = copy.deepcopy(sorted_users)
         fig, ax = plt.subplots()
 
         user_names = [f"{user.first_name} {user.last_name} ({user.id})" for user in leaderboard]
