@@ -6,3 +6,4 @@ USERS = []  # list for object of type User
 
 from app import views
 from app import models
+from app import tests

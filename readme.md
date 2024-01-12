@@ -41,7 +41,7 @@ Response example:
   "first_name": "string",
   "last_name": "string",
   "email": "string",
-  "total_reactions": "number"
+  "total_reactions": "number",
   "posts": []
 }
 ```
