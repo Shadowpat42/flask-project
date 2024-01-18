@@ -24,7 +24,7 @@ def test_reaction_create():
 
     post_payload = {
         "author_id": user_id,
-        "text": "Example text for testing",
+        "text": "Example text for testing post",
     }
 
     create_post = requests.post(f"{ENDPOINT}/post/create", json=post_payload)
@@ -37,6 +37,7 @@ def test_reaction_create():
     }
 
     for _ in range(5):
+        # При создании реакции возвращается только статус запроса!
         create_reaction = requests.post(
             f"{ENDPOINT}/post/{user_id}/{post_id}/reaction", json=reaction_payload
         )

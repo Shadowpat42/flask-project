@@ -1,5 +1,6 @@
 from http import HTTPStatus
 import requests
+import random
 from uuid import uuid4
 
 ENDPOINT = "http://127.0.0.1:5000"
@@ -53,8 +54,7 @@ def test_get_user_posts():
 
     post_create = requests.post(f"{ENDPOINT}/post/create", json=post_payload)
     post_id = post_create.json()["post_id"]
-    assert (post_create.status_code ==
-            HTTPStatus.OK)
+    assert post_create.status_code == HTTPStatus.OK
     assert post_create.json()["author_id"] == post_payload["author_id"]
     assert post_create.json()["text"] == post_payload["text"]
 
@@ -72,7 +72,7 @@ def test_get_user_posts():
     assert delete_post_response.status_code == HTTPStatus.OK
 
 
-def test_get_users_leaderboard():
+def test_get_users_leaderboard_list():
     n = 3
     test_users = []
     for _ in range(n):
@@ -97,3 +97,68 @@ def test_get_users_leaderboard():
     for user_id in test_users:
         delete_response = requests.delete(f"{ENDPOINT}/user/{user_id}")
         assert delete_response.status_code == HTTPStatus.OK
+
+
+def test_get_users_leaderboard_graph():
+    payload_user_1 = create_user_payload()
+    payload_user_2 = create_user_payload()
+    user_create_1 = requests.post(f"{ENDPOINT}/user/create", json=payload_user_1)
+    assert user_create_1.status_code == HTTPStatus.OK
+    user_id_1 = user_create_1.json()["id"]
+    user_create_2 = requests.post(f"{ENDPOINT}/user/create", json=payload_user_2)
+    assert user_create_2.status_code == HTTPStatus.OK
+    user_id_2 = user_create_2.json()["id"]
+
+    post_payload = {
+        "author_id": user_id_1,
+        "text": "Example text for testing",
+    }
+
+    create_post = requests.post(f"{ENDPOINT}/post/create", json=post_payload)
+    post_id = create_post.json()["post_id"]
+    assert create_post.status_code == HTTPStatus.OK
+
+    reaction_payload_1 = {
+        "user_id": user_id_1,
+        "reaction": random.choice(["like", "dislike"]),
+    }
+
+    reaction_payload_2 = {
+        "user_id": user_id_2,
+        "reaction": random.choice(["like", "dislike"]),
+    }
+
+    for _ in range(5):
+        create_reaction_user_1 = requests.post(
+            f"{ENDPOINT}/post/{user_id_1}/{post_id}/reaction", json=reaction_payload_1
+        )
+        assert create_reaction_user_1.status_code == HTTPStatus.OK
+
+    for _ in range(3):
+        create_reaction_user_2 = requests.post(
+            f"{ENDPOINT}/post/{user_id_1}/{post_id}/reaction", json=reaction_payload_2
+        )
+        assert create_reaction_user_2.status_code == HTTPStatus.OK
+
+    leaderboard_graph_payload = {
+        "type": "graph",
+        "sort": "asc",
+    }
+
+    get_leaderboard = requests.get(
+        f"{ENDPOINT}/users/leaderboard", json=leaderboard_graph_payload
+    )
+    assert get_leaderboard.status_code == HTTPStatus.OK
+    assert get_leaderboard.text == '<img src= "/static/users_leaderboard.png">'
+
+    graph = requests.get(f"{ENDPOINT}/static/users_leaderboard.png")
+    assert graph.status_code == HTTPStatus.OK
+
+    delete_user_1 = requests.delete(f"{ENDPOINT}/user/{user_id_1}")
+    assert delete_user_1.status_code == HTTPStatus.OK
+
+    delete_user_2 = requests.delete(f"{ENDPOINT}/user/{user_id_2}")
+    assert delete_user_2.status_code == HTTPStatus.OK
+
+    delete_post_response = requests.delete(f"{ENDPOINT}/post/{user_id_1}/{post_id}")
+    assert delete_post_response.status_code == HTTPStatus.OK

@@ -27,7 +27,8 @@ def test_post_create():
 
     create_post = requests.post(f"{ENDPOINT}/post/create", json=post_payload)
     post_id = create_post.json()["post_id"]
-    assert create_post.status_code == HTTPStatus.OK
+    assert (create_post.status_code ==
+            HTTPStatus.OK)
     assert create_post.json()["author_id"] == post_payload["author_id"]
     assert create_post.json()["text"] == post_payload["text"]
 
