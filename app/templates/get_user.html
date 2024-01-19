@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <body>
+    <br>
+    <h1>Hello, {{user.first_name}} {{user.last_name}}!</h1>
+
+    YOUR USER ID: {{ user.id }} <br>
+    EMAIL: {{ user.email }} <br>
+    TOTAL_REACTIONS: {{ user.total_reactions }} <br>
+    POSTS: <br>
+    {% for post in user.posts %}
+      <div style="margin-left: 20px;">
+        POST ID: {{ post.post_id }} <br>
+        TEXT: {{ post.text }} <br>
+        REACTIONS: <br>
+        {% for reaction in post.reactions %}
+          <div style="margin-left: 20px;">
+            USER_ID: {{ reaction.user_id }} <br>
+            REACTION: {{ reaction.user_reaction }}
+          </div>
+        {% endfor %}
+        STATUS: {{ post.status }} <br>
+      </div>
+      <br>
+    {% endfor %}
+    STATUS: {{ user.status }} <br>
+  </body>
+{% endblock %}

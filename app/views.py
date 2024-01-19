@@ -1,5 +1,5 @@
 from app import app, USERS, models
-from flask import request, Response, url_for
+from flask import request, Response, url_for, render_template
 from http import HTTPStatus
 import matplotlib.pyplot as plt
 import json
@@ -7,7 +7,7 @@ import json
 
 @app.route("/")
 def index():
-    return "<h1>Hello world</h1>"
+    return render_template("index.html", USERS=USERS)
 
 
 @app.post("/user/create")
@@ -266,3 +266,22 @@ def delete_user(user_id):
             mimetype="application/json",
         )
         return response
+
+
+@app.get("/front/user/<int:user_id>")
+def front_get_user(user_id):
+    if models.User.is_valid_id(user_id) is False:
+        return Response(status=HTTPStatus.NOT_FOUND)
+    user = USERS[user_id]
+    return render_template("get_user.html", user=user, USERS=USERS)
+
+
+@app.get("/front/post/<int:user_id>/<int:post_id>")
+def front_get_post(user_id, post_id):
+    if models.User.is_valid_id(user_id) is False:
+        return Response(status=HTTPStatus.NOT_FOUND)
+    if post_id < len(USERS[user_id].posts) and post_id > 0 is False:
+        return Response(status=HTTPStatus.NOT_FOUND)
+    user = USERS[user_id]
+    post = USERS[user_id].posts[post_id]
+    return render_template("get_post.html", post=post, user=user, USERS=USERS)

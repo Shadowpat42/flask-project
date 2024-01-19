@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <body>
+        <br>
+        <h1>Post Information</h1>
+
+        POST ID: {{ post.post_id }} <br>
+        AUTHOR ID: {{ post.author_id }} <br>
+        TEXT: {{ post.text }} <br>
+        REACTIONS: <br>
+        {% for reaction in post.reactions %}
+            <div style="margin-left: 20px;">
+                USER_ID: {{ reaction.user_id }} <br>
+                REACTION: {{ reaction.user_reaction }}
+            </div>
+        {% endfor %}
+        STATUS: {{ post.status }} <br>
+
+    </body>
+{% endblock %}
