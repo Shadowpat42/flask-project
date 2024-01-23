@@ -11,7 +11,7 @@
             Users
           </a>
           <ul class="dropdown-menu">
-            {% for user in USERS %}
+            {% for user in USERS if user.status != 'deleted' %}
               <li><a class="dropdown-item" href="{{url_for('front_get_user', user_id=user.id)}}">[ID:{{user.id}}] {{user.first_name}} {{user.last_name}}</a></li>
             {% endfor %}
           </ul>
@@ -21,7 +21,7 @@
         Posts
           </a>
           <ul class="dropdown-menu">
-            {% for user in USERS %}
+            {% for user in USERS if user.status != "deleted" %}
               {% for post in user.posts %}
                 <li><a class="dropdown-item" href="{{ url_for('front_get_post', user_id=user.id, post_id=post.post_id) }}">[User ID: {{ user.id }}] [Post ID: {{ post.post_id }}] {{ post.text }}</a></li>
               {% endfor %}
@@ -33,10 +33,7 @@
           <a class="nav-link active" aria-current="page" href="{{url_for('index')}}">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{url_for('get_user', user_id=0)}}">Личный кабинет</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{url_for('get_user', user_id=0)}}">Форма для имени</a>
+          <a class="nav-link" href="{{url_for('front_user_create')}}">Create user</a>
         </li>
       </ul>
     </div>

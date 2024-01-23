@@ -1,8 +1,10 @@
 from app import app, USERS, models
+from app.forms import CreateUserForm
 from flask import request, Response, url_for, render_template
 from http import HTTPStatus
 import matplotlib.pyplot as plt
 import json
+import requests
 
 
 @app.route("/")
@@ -274,6 +276,21 @@ def front_get_user(user_id):
         return Response(status=HTTPStatus.NOT_FOUND)
     user = USERS[user_id]
     return render_template("get_user.html", user=user, USERS=USERS)
+
+
+@app.route("/front/user/create", methods=["GET", "POST"])
+def front_user_create():
+    user_data = None
+    form = CreateUserForm()
+    if form.validate_on_submit():
+        user_data = dict()
+        user_data["first_name"] = form.first_name.data
+        user_data["last_name"] = form.last_name.data
+        user_data["email"] = form.email.data
+        response = requests.post(f"http://127.0.0.1:5000/user/create", json=user_data)
+        if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
+            return "Invalid email"
+    return render_template("create_user_form.html", form=form, user_data=user_data, USERS=USERS)
 
 
 @app.get("/front/post/<int:user_id>/<int:post_id>")

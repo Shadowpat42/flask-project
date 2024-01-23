@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <body>
+    <div class="container">
+      {% if user_data %}
+        <br>
+        <h3>User {{ user_data.first_name }} {{ user_data.last_name }} created!</h3>
+      {% else %}
+        <br>
+        <h3>Enter the details of the new user</h3>
+        <form method="POST">
+          {{ form.hidden_tag() }}
+
+          <div class="form-group">
+            {{ form.first_name.label }}ㅤㅤ {{ form.first_name }}
+          </div>
+
+          <div class="form-group">
+            {{ form.last_name.label }} {{ form.last_name }}
+          </div>
+
+          <div class="form-group">
+            {{ form.email.label }}ㅤㅤ{{ form.email }}
+          </div>
+
+          <br>
+          {{ form.submit(class="btn btn-primary") }}
+        </form>
+      {% endif %}
+    </div>
+  </body>
+{% endblock %}
