@@ -12,7 +12,7 @@
     {% for post in user.posts %}
       <div style="margin-left: 20px;">
         POST ID: {{ post.post_id }} <br>
-        TEXT: {{ post.text }} <br>
+        TEXT: <pre style="white-space: pre-line">{{ post.text }}</pre> <br>
         REACTIONS: <br>
         {% for reaction in post.reactions %}
           <div style="margin-left: 20px;">

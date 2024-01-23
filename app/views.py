@@ -1,5 +1,5 @@
 from app import app, USERS, models
-from app.forms import CreateUserForm
+from app.forms import CreateUserForm, CreatePostForm
 from flask import request, Response, url_for, render_template
 from http import HTTPStatus
 import matplotlib.pyplot as plt
@@ -302,3 +302,18 @@ def front_get_post(user_id, post_id):
     user = USERS[user_id]
     post = USERS[user_id].posts[post_id]
     return render_template("get_post.html", post=post, user=user, USERS=USERS)
+
+
+@app.route("/front/post/create", methods=["GET", "POST"])
+def front_post_create():
+    post_data = None
+    form = CreatePostForm()
+    if form.validate_on_submit():
+        post_data = dict()
+        post_data["author_id"] = int(form.author_id.data)
+        post_data["text"] = form.text.data
+        response = requests.post(f"http://127.0.0.1:5000/post/create", json=post_data)
+        if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
+            return "Invalid author_id"
+    return render_template("create_post_form.html", form=form, post_data=post_data, USERS=USERS)
+
