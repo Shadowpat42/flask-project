@@ -15,7 +15,8 @@
                 REACTION: {{ reaction.user_reaction }}
             </div>
         {% endfor %}
-        STATUS: {{ post.status }} <br>
+        STATUS: {{ post.status }} <br> <br>
+        <a href="{{url_for('front_reaction_create', user_id=user.id, post_id=post.post_id)}}" class="btn btn-primary">Поставить реакцию</a>
 
     </body>
 {% endblock %}

@@ -1,5 +1,5 @@
 from app import app, USERS, models
-from app.forms import CreateUserForm, CreatePostForm
+from app.forms import CreateUserForm, CreatePostForm, CreateReactionForm
 from flask import request, Response, url_for, render_template
 from http import HTTPStatus
 import matplotlib.pyplot as plt
@@ -149,7 +149,7 @@ def delete_post(user_id, post_id):
     return response
 
 
-@app.post("/post/<author_id>/<int:post_id>/reaction")
+@app.post("/post/<int:author_id>/<int:post_id>/reaction")
 def reaction(author_id, post_id):
     data = request.get_json()
     user_id = int(data["user_id"])
@@ -290,7 +290,9 @@ def front_user_create():
         response = requests.post(f"http://127.0.0.1:5000/user/create", json=user_data)
         if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
             return "Invalid email"
-    return render_template("create_user_form.html", form=form, user_data=user_data, USERS=USERS)
+    return render_template(
+        "create_user_form.html", form=form, user_data=user_data, USERS=USERS
+    )
 
 
 @app.get("/front/post/<int:user_id>/<int:post_id>")
@@ -315,5 +317,33 @@ def front_post_create():
         response = requests.post(f"http://127.0.0.1:5000/post/create", json=post_data)
         if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
             return "Invalid author_id"
-    return render_template("create_post_form.html", form=form, post_data=post_data, USERS=USERS)
+    return render_template(
+        "create_post_form.html", form=form, post_data=post_data, USERS=USERS
+    )
 
+
+@app.route("/front/post/<int:user_id>/<int:post_id>/reaction", methods=["GET", "POST"])
+def front_reaction_create(user_id, post_id):
+    user = USERS[user_id]
+    post = USERS[user_id].posts[post_id]
+    reaction_data = None
+    form = CreateReactionForm()
+    if form.validate_on_submit():
+        reaction_data = dict()
+        reaction_data["user_id"] = int(form.user_id.data)
+        reaction_data["reaction"] = form.reaction.data
+        response = requests.post(
+            f"http://127.0.0.1:5000/post/{user_id}/{post_id}/reaction",
+            json=reaction_data,
+        )
+        if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
+            return "Invalid reaction or user_id"
+
+    return render_template(
+        "create_reaction_form.html",
+        form=form,
+        reaction_data=reaction_data,
+        USERS=USERS,
+        user=user,
+        post=post,
+    )
