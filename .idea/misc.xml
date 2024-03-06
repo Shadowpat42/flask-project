@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="Black">
-    <option name="enabledOnReformat" value="true" />
-    <option name="sdkUUID" value="2a2692d2-7f15-48b6-abad-cfbf55c3ea88" />
-  </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (flask-project) (2)" project-jdk-type="Python SDK" />
-</project>
