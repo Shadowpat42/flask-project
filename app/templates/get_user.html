@@ -9,21 +9,21 @@
     EMAIL: {{ user.email }} <br>
     TOTAL_REACTIONS: {{ user.total_reactions }} <br>
     POSTS: <br>
-    {% for post in user.posts %}
+    {% for post in user_posts %}
       <div style="margin-left: 20px;">
-        POST ID: {{ post.post_id }} <br>
+        POST ID: {{ post.id }} <br>
         TEXT: <pre style="white-space: pre-line">{{ post.text }}</pre> <br>
         REACTIONS: <br>
-        {% for reaction in post.reactions %}
+        {% for reaction in post.get_reactions() %}
           <div style="margin-left: 20px;">
             USER_ID: {{ reaction.user_id }} <br>
-            REACTION: {{ reaction.user_reaction }}
+            REACTION: {{ reaction.reaction }}
           </div>
         {% endfor %}
-        STATUS: {{ post.status }} <br>
+        STATUS: {{ "none" }} <span style="color: grey"> useless. remove it in templates/get_user </span> <br>
       </div>
       <br>
     {% endfor %}
-    STATUS: {{ user.status }} <br>
+    STATUS: {{ "none" }} <span style="color: grey"> useless. remove it in templates/get_user </span>  <br>
   </body>
 {% endblock %}

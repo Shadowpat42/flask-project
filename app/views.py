@@ -1,4 +1,6 @@
-from app import app, USERS, models
+from app import app, USERS
+from models import User, Post, Reaction
+from sqlalchemy import exc
 from app.forms import CreateUserForm, CreatePostForm, CreateReactionForm
 from flask import request, Response, url_for, render_template
 from http import HTTPStatus
@@ -9,34 +11,28 @@ import requests
 
 @app.route("/")
 def index():
-    return render_template("index.html", USERS=USERS)
+    return render_template("index.html", USERS=User.all())
 
 
 @app.post("/user/create")
 def user_create():
     data = request.get_json()
-    user_id = len(USERS)
     first_name = data["first_name"]
     last_name = data["last_name"]
     email = data["email"]
 
-    if not models.User.is_valid_email(email):
+    if not User.is_valid_email(email):
         return Response(status=HTTPStatus.BAD_REQUEST)
 
-    user = models.User(user_id, first_name, last_name, email)
+    user = User(
+        first_name=first_name, 
+        last_name=last_name, 
+        email=email
+    )
+    user.save()  # .save() method also can be used in 26 line after constructor call
 
-    USERS.append(user)
     response = Response(
-        json.dumps(
-            {
-                "id": user.id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "total_reactions": user.total_reactions,
-                "posts": user.posts,
-            }
-        ),
+        json.dumps(user.json()),  # Flask.jsonify is good alternative
         HTTPStatus.OK,
         mimetype="application/json",
     )
@@ -45,23 +41,12 @@ def user_create():
 
 @app.get("/user/<int:user_id>")
 def get_user(user_id):
-    if models.User.is_valid_id(user_id) is False:
+    user = User.get_by_id(user_id)
+    if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
     else:
-        user = USERS[user_id]
-        user.status = "created"
         response = Response(
-            json.dumps(
-                {
-                    "id": user.id,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "email": user.email,
-                    "total_reactions": user.total_reactions,
-                    "posts": user.posts,
-                    "status": user.status,
-                }
-            ),
+            json.dumps(user.json()),
             HTTPStatus.OK,
             mimetype="application/json",
         )
@@ -72,52 +57,40 @@ def get_user(user_id):
 def post_create():
     data = request.get_json()
     author_id = data["author_id"]
+    user = User.get_by_id(author_id)
 
-    if models.User.is_valid_id(author_id) is False:
+    if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
 
-    user = USERS[int(author_id)]
     text = data["text"]
-    post_id = len(user.posts)
-    post = models.Post(post_id, author_id, text)
-    if post.status != "deleted":
-        user.add_post(post)
+
+    try:
+        post = Post(
+            author_id=author_id, 
+            text=text
+        )
+        post.save()
 
         response = Response(
-            json.dumps(
-                {
-                    "post_id": post_id,
-                    "author_id": post.author_id,
-                    "text": post.text,
-                    "reactions": post.reactions,
-                }
-            ),
+            json.dumps(post.json()),
             mimetype="application/json",
             status=HTTPStatus.OK,
         )
-
         return response
-    else:
-        return Response(status=HTTPStatus.BAD_REQUEST)
+    # exc.IntegrityError raised when the foreign key (author_id) refers to a non-existent user
+    except exc.IntegrityError:
+        return Response(status=HTTPStatus.BAD_REQUEST)        
 
 
 @app.get("/post/<int:user_id>/<int:post_id>")
 def get_post(user_id, post_id):
-    if models.Post.is_valid_id(user_id, post_id) is False:
+    post = Post.get_by_id(post_id)
+
+    if post is None:
         return Response(status=HTTPStatus.NOT_FOUND)
 
-    post = USERS[user_id].posts[post_id]
-    post["status"] = "created"
     response = Response(
-        json.dumps(
-            {
-                "post_id": post_id,
-                "author_id": post["author_id"],
-                "text": post["text"],
-                "reactions": post["reactions"],
-                "status": post["status"],
-            }
-        ),
+        json.dumps(post.json()),
         status=HTTPStatus.OK,
         mimetype="application/json",
     )
@@ -127,21 +100,16 @@ def get_post(user_id, post_id):
 
 @app.delete("/post/<int:user_id>/<int:post_id>")
 def delete_post(user_id, post_id):
-    if models.Post.is_valid_id(user_id, post_id) is False:
+    post = Post.get_by_id(post_id)
+
+    if post is None:
         return Response(status=HTTPStatus.NOT_FOUND)
 
-    post = USERS[user_id].posts[post_id]
-    post["status"] = "deleted"
+    post_json = post.json()
+    post.delete()
+
     response = Response(
-        json.dumps(
-            {
-                "post_id": post_id,
-                "author_id": post["author_id"],
-                "text": post["text"],
-                "reactions": post["reactions"],
-                "status": post["status"],
-            }
-        ),
+        json.dumps(post_json),
         status=HTTPStatus.OK,
         mimetype="application/json",
     )
@@ -152,19 +120,26 @@ def delete_post(user_id, post_id):
 @app.post("/post/<int:author_id>/<int:post_id>/reaction")
 def reaction(author_id, post_id):
     data = request.get_json()
-    user_id = int(data["user_id"])
-    if models.User.is_valid_id(user_id) is False:
+
+    user = User.get_by_id(author_id)
+
+    if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
 
     user_reaction = data["reaction"]
-    if models.Reaction.is_valid_reaction(user_reaction) is False:
+    if Reaction.is_valid_reaction(user_reaction) is False:
         return Response(status=HTTPStatus.BAD_REQUEST)
 
-    reaction_obj = models.Reaction(post_id, user_id, user_reaction)
-    if reaction_obj.status != "deleted":
-        USERS[int(author_id)].add_reaction(reaction_obj)
+    try:
+        reaction = Reaction(
+            user_id=author_id, 
+            post_id=post_id, 
+            reaction=user_reaction
+        )
+        reaction.save()
         return Response(status=HTTPStatus.OK)
-    else:
+    
+    except exc.IntegrityError:
         return Response(status=HTTPStatus.BAD_REQUEST)
 
 
@@ -172,17 +147,20 @@ def reaction(author_id, post_id):
 def get_user_posts(user_id):
     data = request.get_json()
     sort = data["sort"]
-    user = USERS[user_id]
-    posts = user.posts
+    user = User.get_by_id(user_id)
+
+    if user is None:
+        return Response(status=HTTPStatus.NOT_FOUND)
+    
     if sort == "asc":
-        sorted_posts = sorted(posts, key=lambda x: len(x["reactions"]))
+        posts = Post.get_by_user_id(user.id)
     elif sort == "desc":
-        sorted_posts = sorted(posts, key=lambda x: len(x["reactions"]), reverse=True)
+        posts = Post.get_by_user_id(user.id, desc=True)
     else:
         return Response(status=HTTPStatus.BAD_REQUEST)
-    valid_posts = [post for post in sorted_posts if post["status"] == "created"]
+
     response = Response(
-        json.dumps({"posts": valid_posts}),
+        json.dumps({"posts": [post.json() for post in posts]}),
         status=HTTPStatus.OK,
         mimetype="application/json",
     )
@@ -196,15 +174,13 @@ def get_users_leaderboard():
     if leaderboard_type == "list":
         sort = data["sort"]
         if sort == "asc":
-            sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
+            users = User.get_by_reactions()
         elif sort == "desc":
-            sorted_users = sorted(USERS, key=lambda x: x.total_reactions, reverse=True)
+            users = User.get_by_reactions(desc=True)
         else:
             return Response(status=HTTPStatus.BAD_REQUEST)
 
-        leaderboard = [
-            user.to_dict() for user in sorted_users if models.User.is_valid_id(user.id)
-        ]
+        leaderboard = [user.json() for user in users]
 
         response = Response(
             json.dumps(
@@ -218,18 +194,13 @@ def get_users_leaderboard():
         return response
 
     elif leaderboard_type == "graph":
-        sorted_users = sorted(USERS, key=lambda x: x.total_reactions)
-        leaderboard = [
-            user.to_dict() for user in sorted_users if models.User.is_valid_id(user.id)
-        ]
-
+        users = User.get_by_reactions()
         fig, ax = plt.subplots()
 
         user_names = [
-            f"{user['first_name']} {user['last_name']} ({user['id']})"
-            for user in leaderboard
+            f"{user.first_name} {user.last_name} ({user.id})" for user in users
         ]
-        user_total_reactions = [user["total_reactions"] for user in leaderboard]
+        user_total_reactions = [user.total_reactions for user in users]
 
         ax.bar(user_names, user_total_reactions)
         ax.set_ylabel("User total reactions")
@@ -247,23 +218,15 @@ def get_users_leaderboard():
 
 @app.delete("/user/<int:user_id>")
 def delete_user(user_id):
-    if models.User.is_valid_id(user_id) is False:
+    user = User.get_by_id(user_id)
+    
+    if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
     else:
-        user = USERS[user_id]
-        user.status = "deleted"
+        user_json = user.json()
+        user.delete()
         response = Response(
-            json.dumps(
-                {
-                    "id": user.id,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "email": user.email,
-                    "total_reactions": user.total_reactions,
-                    "posts": user.posts,
-                    "status": user.status,
-                }
-            ),
+            json.dumps(user_json),
             HTTPStatus.OK,
             mimetype="application/json",
         )
@@ -272,10 +235,14 @@ def delete_user(user_id):
 
 @app.get("/front/user/<int:user_id>")
 def front_get_user(user_id):
-    if models.User.is_valid_id(user_id) is False:
+    user = User.get_by_id(user_id)
+
+    if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
-    user = USERS[user_id]
-    return render_template("get_user.html", user=user, USERS=USERS)
+
+    posts = Post.get_by_user_id(user.id)
+
+    return render_template("get_user.html", user=user, user_posts=posts, USERS=User.all())
 
 
 @app.route("/front/user/create", methods=["GET", "POST"])
@@ -291,19 +258,23 @@ def front_user_create():
         if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
             return "Invalid email"
     return render_template(
-        "create_user_form.html", form=form, user_data=user_data, USERS=USERS
+        "create_user_form.html", form=form, user_data=user_data, USERS=User.all()
     )
 
 
 @app.get("/front/post/<int:user_id>/<int:post_id>")
 def front_get_post(user_id, post_id):
-    if models.User.is_valid_id(user_id) is False:
+    user = User.get_by_id(user_id)
+
+    if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
-    if post_id < len(USERS[user_id].posts) and post_id > 0 is False:
+    
+    post = Post.get_by_id(post_id)
+
+    if post is None:
         return Response(status=HTTPStatus.NOT_FOUND)
-    user = USERS[user_id]
-    post = USERS[user_id].posts[post_id]
-    return render_template("get_post.html", post=post, user=user, USERS=USERS)
+    
+    return render_template("get_post.html", post=post, user=user, USERS=User.all())
 
 
 @app.route("/front/post/create", methods=["GET", "POST"])
@@ -318,22 +289,23 @@ def front_post_create():
         if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
             return "Invalid author_id"
     return render_template(
-        "create_post_form.html", form=form, post_data=post_data, USERS=USERS
+        "create_post_form.html", form=form, post_data=post_data, USERS=User.all()
     )
 
 
 @app.route("/front/post/<int:user_id>/<int:post_id>/reaction", methods=["GET", "POST"])
 def front_reaction_create(user_id, post_id):
-    user = USERS[user_id]
-    post = USERS[user_id].posts[post_id]
+    user = User.get_by_id(user_id)
+    post = Post.get_by_id(post_id)
     reaction_data = None
     form = CreateReactionForm()
+
     if form.validate_on_submit():
         reaction_data = dict()
         reaction_data["user_id"] = int(form.user_id.data)
         reaction_data["reaction"] = form.reaction.data
-        response = requests.post(
-            f"http://127.0.0.1:5000/post/{user_id}/{post_id}/reaction",
+        response = requests.post(                                        # what for sync http request?   
+            f"http://127.0.0.1:5000/post/{user_id}/{post_id}/reaction",  # you can call your fuinction
             json=reaction_data,
         )
         if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:
@@ -343,7 +315,7 @@ def front_reaction_create(user_id, post_id):
         "create_reaction_form.html",
         form=form,
         reaction_data=reaction_data,
-        USERS=USERS,
+        USERS=User.all(),
         user=user,
         post=post,
     )

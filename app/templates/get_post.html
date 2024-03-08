@@ -5,18 +5,18 @@
         <br>
         <h1>Post Information</h1>
 
-        POST ID: {{ post.post_id }} <br>
+        POST ID: {{ post.id }} <br>
         AUTHOR ID: {{ post.author_id }} <br>
         TEXT: <pre style="white-space: pre-line;">{{ post.text }}</pre> <br>
         REACTIONS: <br>
-        {% for reaction in post.reactions %}
+        {% for reaction in post.get_reactions() %}
             <div style="margin-left: 20px;">
                 USER_ID: {{ reaction.user_id }} <br>
-                REACTION: {{ reaction.user_reaction }}
+                REACTION: {{ reaction.reaction }}
             </div>
         {% endfor %}
-        STATUS: {{ post.status }} <br> <br>
-        <a href="{{url_for('front_reaction_create', user_id=user.id, post_id=post.post_id)}}" class="btn btn-primary">Поставить реакцию</a>
+        STATUS: {{ "none" }} <span style="color: grey"> useless. remove it in templates/get_post </span> <br> <br>
+        <a href="{{url_for('front_reaction_create', user_id=user.id, post_id=post.id)}}" class="btn btn-primary">Поставить реакцию</a>
 
     </body>
 {% endblock %}

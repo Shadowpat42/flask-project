@@ -1,0 +1,6 @@
+.idea/
+.vs_code/
+__pycache__/
+.pytest_cache/
+instance/
+*.db
