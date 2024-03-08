@@ -134,7 +134,7 @@ def reaction(author_id, post_id):
 
     try:
         reaction = Reaction(
-            user_id=author_id, 
+            user_id=user.id, 
             post_id=post_id, 
             reaction=user_reaction
         )
