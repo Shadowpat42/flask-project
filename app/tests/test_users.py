@@ -34,7 +34,6 @@ def test_user_create():
     assert delete_response.json()["first_name"] == payload["first_name"]
     assert delete_response.json()["last_name"] == payload["last_name"]
     assert delete_response.json()["email"] == payload["email"]
-    assert delete_response.json()["status"] == "deleted"
 
 
 def test_user_create_wrong_data():

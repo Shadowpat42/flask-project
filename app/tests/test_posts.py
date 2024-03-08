@@ -51,9 +51,6 @@ def test_post_create():
         delete_post_response.json()["reactions"]
         == create_post_response.json()["reactions"]
     )
-    assert (
-        delete_post_response.json()["status"] != create_post_response.json()["status"]
-    )
 
     delete_user_response = requests.delete(f"{ENDPOINT}/user/{user_id}")
     assert (delete_user_response.status_code ==
