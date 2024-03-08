@@ -11,7 +11,7 @@
             Users
           </a>
           <ul class="dropdown-menu">
-            {% for user in USERS if user.status != 'deleted' %}
+            {% for user in USERS %}
               <li><a class="dropdown-item" href="{{url_for('front_get_user', user_id=user.id)}}">[ID:{{user.id}}] {{user.first_name}} {{user.last_name}}</a></li>
             {% endfor %}
           </ul>
@@ -21,9 +21,9 @@
         Posts
           </a>
           <ul class="dropdown-menu">
-            {% for user in USERS if user.status != "deleted" %}
-              {% for post in user.posts %}
-                <li><a class="dropdown-item" href="{{ url_for('front_get_post', user_id=user.id, post_id=post.post_id) }}">[User ID: {{ user.id }}] [Post ID: {{ post.post_id }}] {{ post.text }}</a></li>
+            {% for user in USERS %}
+              {% for post in user.posts() %}
+                <li><a class="dropdown-item" href="{{ url_for('front_get_post', user_id=user.id, post_id=post.id) }}">[User ID: {{ user.id }}] [Post ID: {{ post.id }}] {{ post.text }}</a></li>
               {% endfor %}
             {% endfor %}
           </ul>
