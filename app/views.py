@@ -122,8 +122,15 @@ def reaction(author_id, post_id):
     data = request.get_json()
 
     user = User.get_by_id(data["user_id"])
-
     if user is None:
+        return Response(status=HTTPStatus.NOT_FOUND)
+
+    author = User.get_by_id(author_id)
+    if author is None:
+        return Response(status=HTTPStatus.NOT_FOUND)
+    
+    post = Post.get_by_id(post_id)
+    if post is None:
         return Response(status=HTTPStatus.NOT_FOUND)
 
     user_reaction = data["reaction"]
