@@ -10,6 +10,7 @@ class ReactionType(Enum):
     LIKE = "like"
     DISLIKE = "dislike"
 
+
 class Reaction(db.Model):
     __tablename__ = "reaction"
     valid_reactions = ReactionType

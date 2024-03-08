@@ -23,7 +23,7 @@ class User(db.Model):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
-            "total_reactions": self.total_reactions
+            "total_reactions": self.total_reactions,
         }
 
     @staticmethod
@@ -70,7 +70,7 @@ class User(db.Model):
             self.total_reactions = 1
         else:
             self.total_reactions += 1
-    
+
     def posts(self) -> List[Post]:
         """
         Get posts for the user.

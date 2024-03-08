@@ -5,4 +5,4 @@ app.config["SECRET_KEY"] = "helloworld"
 
 USERS = []
 
-from app import views, tests, models, forms
+from app import views, tests, forms
