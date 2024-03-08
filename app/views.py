@@ -121,7 +121,7 @@ def delete_post(user_id, post_id):
 def reaction(author_id, post_id):
     data = request.get_json()
 
-    user = User.get_by_id(author_id)
+    user = User.get_by_id(data["user_id"])
 
     if user is None:
         return Response(status=HTTPStatus.NOT_FOUND)
