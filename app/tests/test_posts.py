@@ -9,8 +9,7 @@ def create_user_payload():
     return {
         "first_name": "Vladimir" + str(uuid4()),
         "last_name": "Jonson" + str(uuid4()),
-        "email": "test@test.ru",
-        "status": "created",
+        "email": "test@test.ru"
     }
 
 
@@ -58,4 +57,3 @@ def test_post_create():
     assert delete_user_response.json()["first_name"] == user_payload["first_name"]
     assert delete_user_response.json()["last_name"] == user_payload["last_name"]
     assert delete_user_response.json()["email"] == user_payload["email"]
-    assert delete_user_response.json()["status"] != user_payload["status"]
