@@ -1,6 +1,5 @@
 # models.py
 import re
-
 from app import USERS
 
 
@@ -22,7 +21,6 @@ class User:
             "email": self.email,
             "total_reactions": self.total_reactions,
             "status": self.status,
-
         }
 
     @staticmethod
