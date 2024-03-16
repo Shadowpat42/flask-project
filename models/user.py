@@ -6,6 +6,7 @@ from sqlalchemy import desc as reverse
 
 from .db import db
 from .post import Post
+from .reaction import Reaction
 
 
 class User(db.Model):
@@ -15,7 +16,6 @@ class User(db.Model):
     first_name = db.Column(db.String)
     last_name = db.Column(db.String)
     email = db.Column(db.String)
-    total_reactions = db.Column(db.Integer, default=0)
 
     def json(self):
         return {
@@ -23,8 +23,12 @@ class User(db.Model):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
-            "total_reactions": self.total_reactions,
+            "total_reactions": self.total_reactions
         }
+    
+    @property
+    def total_reactions(self):
+        return len(Reaction.get_by_user_id(self.id))
 
     @staticmethod
     def is_valid_email(email: str) -> bool:
@@ -62,15 +66,7 @@ class User(db.Model):
         else:
             return cls.query.order_by(reverse(cls.total_reactions)).all()
 
-    def total_reactions_inc(self) -> None:
-        """
-        Increments the total number of reactions by 1 if it exists, otherwise sets it to 1.
-        """
-        if not self.total_reactions:
-            self.total_reactions = 1
-        else:
-            self.total_reactions += 1
-
+    
     def posts(self) -> List[Post]:
         """
         Get posts for the user.
@@ -93,5 +89,11 @@ class User(db.Model):
         """
         Delete the current object from the database session.
         """
+        for post in self.posts():
+            post.delete()
+
+        for reaction in Reaction.get_by_user_id(self.id):
+            reaction.delete()
+
         db.session.delete(self)
         db.session.commit()

@@ -15,7 +15,6 @@
                 REACTION: {{ reaction.reaction }}
             </div>
         {% endfor %}
-        STATUS: {{ "none" }} <span style="color: grey"> useless. remove it in templates/get_post </span> <br> <br>
         <a href="{{url_for('front_reaction_create', user_id=user.id, post_id=post.id)}}" class="btn btn-primary">Поставить реакцию</a>
 
     </body>

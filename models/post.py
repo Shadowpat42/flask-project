@@ -71,5 +71,8 @@ class Post(db.Model):
         """
         Delete the current object from the database session.
         """
+        for reaction in self.get_reactions():
+            reaction.delete()
+        
         db.session.delete(self)
         db.session.commit()

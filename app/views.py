@@ -1,4 +1,4 @@
-from app import app
+from app import app, USERS
 from models import User, Post, Reaction
 from sqlalchemy import exc
 from app.forms import CreateUserForm, CreatePostForm, CreateReactionForm
@@ -122,8 +122,10 @@ def reaction(author_id, post_id):
     data = request.get_json()
 
     user = User.get_by_id(data["user_id"])
-
-    if user is None:
+    post = Post.get_by_id(post_id)
+    author = User.get_by_id(author_id)
+    
+    if user is None or post is None or author is None:
         return Response(status=HTTPStatus.NOT_FOUND)
 
     user_reaction = data["reaction"]
@@ -132,7 +134,7 @@ def reaction(author_id, post_id):
 
     try:
         reaction = Reaction(
-            user_id=user.id,
+            user_id=user.id, 
             post_id=post_id, 
             reaction=user_reaction
         )
@@ -305,7 +307,7 @@ def front_reaction_create(user_id, post_id):
         reaction_data["user_id"] = int(form.user_id.data)
         reaction_data["reaction"] = form.reaction.data
         response = requests.post(                                        # what for sync http request?   
-            f"http://127.0.0.1:5000/post/{user_id}/{post_id}/reaction",  # you can call your function
+            f"http://127.0.0.1:5000/post/{user_id}/{post_id}/reaction",  # you can call your fuinction
             json=reaction_data,
         )
         if response.status_code not in {HTTPStatus.OK, HTTPStatus.CREATED}:

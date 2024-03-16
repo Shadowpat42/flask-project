@@ -10,7 +10,6 @@ class ReactionType(Enum):
     LIKE = "like"
     DISLIKE = "dislike"
 
-
 class Reaction(db.Model):
     __tablename__ = "reaction"
     valid_reactions = ReactionType
@@ -95,4 +94,8 @@ class Reaction(db.Model):
         Save the current object to the database session.
         """
         db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
         db.session.commit()
